@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Env files
+.env
+.env.*
+
+# Java
+hs_err_pid*
+replay_pid*
+
+# Docker overrides/local artifacts
+docker-compose.override.yml

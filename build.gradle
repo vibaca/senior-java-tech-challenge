@@ -1,5 +1,16 @@
 plugins {
 	id 'java'
+	id 'application'
+}
+
+application {
+	mainClass = 'com.mango.products.ProductsApplication'
+}
+
+jar {
+	manifest {
+		attributes 'Main-Class': application.mainClass
+	}
 }
 
 group = 'com.mango'
