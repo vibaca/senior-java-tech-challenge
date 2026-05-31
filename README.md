@@ -46,7 +46,13 @@ com.mango.products/
         ProductId.java         <- Value Object
       repository/
         ProductRepository.java <- Puerto saliente (interfaz)
-    application/               <- (pendiente: handlers CQRS)
+    application/
+      command/
+        CreateProductCommand.java
+        CreateProductHandler.java
+      query/
+        GetProductQuery.java
+        GetProductHandler.java
     infrastructure/            <- (pendiente: adaptadores JPA)
     api/                       <- (pendiente: REST controllers)
 
@@ -64,7 +70,16 @@ com.mango.products/
         DomainException.java
         InvalidDateRangeException.java
         PriceOverlapException.java
-    application/               <- (pendiente: handlers CQRS)
+        PriceNotFoundException.java
+    application/
+      command/
+        AddPriceCommand.java
+        AddPriceHandler.java
+      query/
+        GetEffectivePriceQuery.java
+        GetEffectivePriceHandler.java
+        GetPriceHistoryQuery.java
+        GetPriceHistoryHandler.java
     infrastructure/            <- (pendiente: adaptadores JPA)
     api/                       <- (pendiente: REST controllers)
 ```
@@ -79,11 +94,19 @@ com.mango.products/
 
 ### Tests unitarios
 
-Los tests cubren el dominio puro, sin Spring context, sin DB:
+Los tests cubren dominio y application layer sin Spring context, sin DB:
 
+**Dominio:**
 - `ProductTest`: creacion valida e invalida de producto
 - `DateRangeTest`: rangos cerrados, abiertos, solapamientos, contiene fecha
 - `PriceTest`: efectividad en fecha, solapamiento entre precios, validaciones de valor
+
+**Application (con Mockito):**
+- `CreateProductHandlerTest`: creacion, verificacion de save, validaciones
+- `GetProductHandlerTest`: producto encontrado, producto no encontrado
+- `AddPriceHandlerTest`: precio guardado, solapamiento, producto no encontrado, rango abierto
+- `GetEffectivePriceHandlerTest`: precio vigente encontrado, no encontrado
+- `GetPriceHistoryHandlerTest`: historial completo, lista vacia, producto no encontrado
 
 ## Ejecucion local
 
