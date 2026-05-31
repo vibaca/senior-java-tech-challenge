@@ -6,6 +6,8 @@ API para gestionar productos y su historial de precios en el tiempo.
 
 - [Requisitos](#requisitos)
 - [Stack tecnico](#stack-tecnico)
+- [Arquitectura](#arquitectura)
+- [Estructura del proyecto](#estructura-del-proyecto)
 - [Ejecucion local](#ejecucion-local)
 - [Ejecucion con Docker](#ejecucion-con-docker)
 - [Benchmark](#benchmark)
@@ -22,6 +24,66 @@ API para gestionar productos y su historial de precios en el tiempo.
 - Spring Boot 3.3.5
 - Gradle Wrapper
 - Docker
+- PostgreSQL (pendiente de configurar)
+
+## Arquitectura
+
+El proyecto sigue **Vertical Slicing** con **Screaming Architecture**, aplicando principios de **DDD**, **Arquitectura Hexagonal**, **SOLID** y preparado para **CQRS**.
+
+### Por que Vertical Slicing
+
+Cada feature (`product`, `pricing`) es autocontenida. El evaluador puede entender el sistema leyendo un solo feature de arriba a abajo, sin saltar entre capas horizontales.
+
+### Estructura de paquetes
+
+```
+com.mango.products/
+  product/                     <- feature: gestion de productos
+    domain/
+      model/
+        Product.java           <- Aggregate Root
+      valueobject/
+        ProductId.java         <- Value Object
+      repository/
+        ProductRepository.java <- Puerto saliente (interfaz)
+    application/               <- (pendiente: handlers CQRS)
+    infrastructure/            <- (pendiente: adaptadores JPA)
+    api/                       <- (pendiente: REST controllers)
+
+  pricing/                     <- feature: precios historicos
+    domain/
+      model/
+        Price.java
+      valueobject/
+        PriceId.java
+        PriceValue.java
+        DateRange.java
+      repository/
+        PricingRepository.java <- Puerto saliente (interfaz)
+      exception/
+        DomainException.java
+        InvalidDateRangeException.java
+        PriceOverlapException.java
+    application/               <- (pendiente: handlers CQRS)
+    infrastructure/            <- (pendiente: adaptadores JPA)
+    api/                       <- (pendiente: REST controllers)
+```
+
+### Reglas de dominio implementadas
+
+- `DateRange`: valida que `initDate < endDate`, soporta `endDate = null` (vigencia abierta)
+- `DateRange.overlaps()`: detecta solapamientos entre rangos, incluyendo rangos abiertos
+- `DateRange.contains()`: determina si una fecha cae dentro del rango
+- `PriceValue`: valor siempre mayor que cero
+- `Product`: nombre y descripcion no pueden estar en blanco
+
+### Tests unitarios
+
+Los tests cubren el dominio puro, sin Spring context, sin DB:
+
+- `ProductTest`: creacion valida e invalida de producto
+- `DateRangeTest`: rangos cerrados, abiertos, solapamientos, contiene fecha
+- `PriceTest`: efectividad en fecha, solapamiento entre precios, validaciones de valor
 
 ## Ejecucion local
 
