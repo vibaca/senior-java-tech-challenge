@@ -53,8 +53,15 @@ com.mango.products/
       query/
         GetProductQuery.java
         GetProductHandler.java
-    infrastructure/            <- (pendiente: adaptadores JPA)
-    api/                       <- (pendiente: REST controllers)
+     infrastructure/
+      persistence/
+        InMemoryProductRepository.java
+    api/
+      controller/
+        ProductController.java
+      dto/
+        CreateProductRequest.java
+        CreateProductResponse.java
 
   pricing/                     <- feature: precios historicos
     domain/
@@ -80,8 +87,19 @@ com.mango.products/
         GetEffectivePriceHandler.java
         GetPriceHistoryQuery.java
         GetPriceHistoryHandler.java
-    infrastructure/            <- (pendiente: adaptadores JPA)
-    api/                       <- (pendiente: REST controllers)
+    infrastructure/
+      persistence/
+        InMemoryPricingRepository.java
+    api/
+      controller/
+        PricingController.java
+      dto/
+        AddPriceRequest.java
+        PriceDTO.java
+
+  config/
+    ApplicationConfig.java           <- Beans de handlers
+    GlobalExceptionHandler.java     <- Manejo global de excepciones
 ```
 
 ### Reglas de dominio implementadas
@@ -107,6 +125,10 @@ Los tests cubren dominio y application layer sin Spring context, sin DB:
 - `AddPriceHandlerTest`: precio guardado, solapamiento, producto no encontrado, rango abierto
 - `GetEffectivePriceHandlerTest`: precio vigente encontrado, no encontrado
 - `GetPriceHistoryHandlerTest`: historial completo, lista vacia, producto no encontrado
+
+**Integracion (MockMvc - con Spring context real):**
+- `ProductControllerTest`: crear producto, obtener producto, 404 cuando no existe
+- `PricingControllerTest`: agregar precio, obtener historial, obtener precio vigente, 404 no encontrado
 
 ## Ejecucion local
 
@@ -146,6 +168,41 @@ java -version
 ```zsh
 curl -i http://localhost:8080/actuator/health
 ```
+
+7) Probar endpoints principales:
+
+```zsh
+# Crear producto
+curl -X POST http://localhost:8080/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Zapatillas","description":"Modelo 2025"}'
+
+# Obtener producto (reemplace con el ID de respuesta)
+curl -i http://localhost:8080/products/{productId}
+
+# Agregar precio
+curl -X POST http://localhost:8080/products/{productId}/prices \
+  -H "Content-Type: application/json" \
+  -d '{"value":99.99,"initDate":"2024-01-01","endDate":"2024-06-30"}'
+
+# Obtener precio vigente
+curl -i http://localhost:8080/products/{productId}/prices?date=2024-04-15
+
+# Obtener historial completo
+curl -i http://localhost:8080/products/{productId}/prices
+```
+
+## Arquitectura de Controllers (SRP)
+
+Cada controller tiene una única responsabilidad por feature:
+
+- **ProductController**: CRUD básico de productos
+  - `POST /products` → crea producto
+  - `GET /products/{id}` → obtiene datos del producto
+
+- **PricingController**: manejo de precios históricos
+  - `POST /products/{id}/prices` → agrega precio
+  - `GET /products/{id}/prices` → historial o precio vigente (con ?date)
 
 ## Ejecucion con Docker
 
