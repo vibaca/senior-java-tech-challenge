@@ -17,6 +17,7 @@ API para gestionar productos y su historial de precios en el tiempo.
 
 - Java 21
 - Docker Desktop (incluye Docker Compose)
+- PostgreSQL 16+ (si no usas el contenedor incluido)
 
 ## Stack tecnico
 
@@ -24,7 +25,8 @@ API para gestionar productos y su historial de precios en el tiempo.
 - Spring Boot 3.3.5
 - Gradle Wrapper
 - Docker
-- PostgreSQL (pendiente de configurar)
+- Spring Data JPA
+- PostgreSQL
 
 ## Arquitectura
 
@@ -53,9 +55,13 @@ com.mango.products/
       query/
         GetProductQuery.java
         GetProductHandler.java
-     infrastructure/
+    infrastructure/
       persistence/
-        InMemoryProductRepository.java
+        JpaProductRepository.java
+      persistence/entity/
+        ProductEntity.java
+      persistence/jpa/
+        SpringDataProductJpaRepository.java
     api/
       controller/
         ProductController.java
@@ -89,7 +95,11 @@ com.mango.products/
         GetPriceHistoryHandler.java
     infrastructure/
       persistence/
-        InMemoryPricingRepository.java
+        JpaPricingRepository.java
+      persistence/entity/
+        PriceEntity.java
+      persistence/jpa/
+        SpringDataPriceJpaRepository.java
     api/
       controller/
         PricingController.java
@@ -126,9 +136,11 @@ Los tests cubren dominio y application layer sin Spring context, sin DB:
 - `GetEffectivePriceHandlerTest`: precio vigente encontrado, no encontrado
 - `GetPriceHistoryHandlerTest`: historial completo, lista vacia, producto no encontrado
 
-**Integracion (MockMvc - con Spring context real):**
+**Integracion (MockMvc + JPA):**
 - `ProductControllerTest`: crear producto, obtener producto, 404 cuando no existe
 - `PricingControllerTest`: agregar precio, obtener historial, obtener precio vigente, 404 no encontrado
+
+Los tests de integracion usan H2 en memoria (`src/test/resources/application.yml`) para ser rapidos y deterministas. La aplicacion normal usa PostgreSQL por defecto.
 
 ## Ejecucion local
 
@@ -151,25 +163,31 @@ java -version
 ./gradlew --version
 ```
 
-4) Ejecutar tests:
+4) Levantar PostgreSQL local (si no lo tienes corriendo fuera de Docker):
+
+```zsh
+docker compose up -d postgres
+```
+
+5) Ejecutar tests:
 
 ```zsh
 ./gradlew clean test
 ```
 
-5) Levantar API:
+6) Levantar API:
 
 ```zsh
 ./gradlew bootRun
 ```
 
-6) Validar health endpoint:
+7) Validar health endpoint:
 
 ```zsh
 curl -i http://localhost:8080/actuator/health
 ```
 
-7) Probar endpoints principales:
+8) Probar endpoints principales:
 
 ```zsh
 # Crear producto
@@ -204,6 +222,17 @@ Cada controller tiene una única responsabilidad por feature:
   - `POST /products/{id}/prices` → agrega precio
   - `GET /products/{id}/prices` → historial o precio vigente (con ?date)
 
+## Persistencia
+
+La persistencia por defecto se implementa con **Spring Data JPA + PostgreSQL**.
+
+- `JpaProductRepository` adapta el puerto `ProductRepository`
+- `JpaPricingRepository` adapta el puerto `PricingRepository`
+- `ProductEntity` y `PriceEntity` representan el modelo persistente
+- `SpringData...JpaRepository` encapsula las operaciones JPA/JPQL
+
+La infraestructura de persistencia usa unicamente implementaciones JPA (sin repositorios `in-memory`).
+
 ## Ejecucion con Docker
 
 ### Solo API (recomendado para desarrollo)
@@ -211,7 +240,7 @@ Cada controller tiene una única responsabilidad por feature:
 ```zsh
 cd <ruta-al-proyecto>
 docker compose down
-docker compose up --build app
+docker compose up --build postgres app
 ```
 
 ### API + benchmark
@@ -226,7 +255,7 @@ docker compose up --build
 
 ```zsh
 cd <ruta-al-proyecto>
-docker compose up -d --build app
+docker compose up -d --build postgres app
 ```
 
 ### Ver estado y logs
@@ -250,7 +279,7 @@ docker compose down
 cd <ruta-al-proyecto>
 docker compose down
 docker compose build --no-cache app
-docker compose up app
+docker compose up postgres app
 ```
 
 ## Benchmark
@@ -258,10 +287,11 @@ docker compose up app
 El servicio `benchmark` ejecuta `benchmark.sh` y realiza:
 
 1. Espera a que `GET /actuator/health` responda OK.
-2. Crea un producto de prueba.
-3. Agrega varios precios por rango de fechas.
-4. Consulta precio vigente e historial.
-5. Lanza pruebas concurrentes de escritura y lectura.
+2. Usa PostgreSQL como almacenamiento persistente de productos y precios.
+3. Crea un producto de prueba.
+4. Agrega varios precios por rango de fechas.
+5. Consulta precio vigente e historial.
+6. Lanza pruebas concurrentes de escritura y lectura.
 
 ## Troubleshooting
 
@@ -278,7 +308,12 @@ java -version
 ./gradlew --version
 ```
 
-2) Si no estas en Java 21, exportar `JAVA_HOME` a una instalacion de JDK 21 y reintentar.
+2) Si no estas en Java 21, exportar `JAVA_HOME` a una instalacion de JDK 21 y reintentar:
+
+```zsh
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+export PATH="$JAVA_HOME/bin:$PATH"
+```
 
 3) Limpiar caches locales de Gradle y recompilar:
 
@@ -301,10 +336,20 @@ chmod +x ./gradlew
 El artefacto no se genero como `bootJar` ejecutable de Spring Boot. Reconstruir la imagen:
 
 ```zsh
-cd /Users/isai/projects/senior-java-tech-challenge
+cd <ruta-al-proyecto>
 docker compose down
 docker compose build --no-cache app
-docker compose up app
+docker compose up postgres app
+```
+
+### Error de conexion a PostgreSQL
+
+Si ejecutas la app fuera de Docker, asegúrate de tener PostgreSQL disponible en `localhost:5432` o exporta estas variables:
+
+```zsh
+export DB_URL=jdbc:postgresql://localhost:5432/products
+export DB_USERNAME=products
+export DB_PASSWORD=products
 ```
 
 ### `benchmark` se queda en "Esperando API..."
@@ -312,6 +357,6 @@ docker compose up app
 La API no arranco correctamente. Revisar logs:
 
 ```zsh
-cd /Users/isai/projects/senior-java-tech-challenge
+cd <ruta-al-proyecto>
 docker compose logs app --tail=100
 ```

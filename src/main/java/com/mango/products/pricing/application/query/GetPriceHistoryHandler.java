@@ -5,6 +5,7 @@ import com.mango.products.pricing.domain.repository.PricingRepository;
 import com.mango.products.product.domain.exception.ProductNotFoundException;
 import com.mango.products.product.domain.repository.ProductRepository;
 import com.mango.products.product.domain.valueobject.ProductId;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class GetPriceHistoryHandler {
         this.pricingRepository = pricingRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<Price> handle(GetPriceHistoryQuery query) {
         ProductId productId = ProductId.of(query.productId());
 

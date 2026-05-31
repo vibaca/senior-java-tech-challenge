@@ -12,6 +12,10 @@ public record PriceId(UUID value) {
     public static PriceId generate() {
         return new PriceId(UUID.randomUUID());
     }
+
+    public static PriceId of(UUID value) {
+        return new PriceId(value);
+    }
 }
 
 

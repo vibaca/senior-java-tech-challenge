@@ -9,6 +9,7 @@ import com.mango.products.pricing.domain.valueobject.PriceValue;
 import com.mango.products.product.domain.exception.ProductNotFoundException;
 import com.mango.products.product.domain.repository.ProductRepository;
 import com.mango.products.product.domain.valueobject.ProductId;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class AddPriceHandler {
         this.pricingRepository = pricingRepository;
     }
 
+    @Transactional
     public UUID handle(AddPriceCommand command) {
         ProductId productId = ProductId.of(command.productId());
 
