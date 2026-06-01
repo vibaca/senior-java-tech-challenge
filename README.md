@@ -260,6 +260,19 @@ curl -i http://localhost:8080/products/{productId}/prices \
   -H "Authorization: Bearer <jwt-token>"
 ```
 
+10) Poblar datos de prueba automaticamente (manual):
+
+```zsh
+chmod +x ./scripts/seed-test-data.sh
+./scripts/seed-test-data.sh
+```
+
+Opcionalmente puedes usar variables de entorno si cambian URL o credenciales:
+
+```zsh
+BASE_URL=http://localhost:8080 AUTH_USER=admin AUTH_PASSWORD=password ./scripts/seed-test-data.sh
+```
+
 ## OpenAPI y Swagger
 
 Con la API levantada, puedes consultar la documentacion interactiva aqui:
