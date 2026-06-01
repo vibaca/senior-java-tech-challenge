@@ -1,6 +1,8 @@
 package com.mango.products.config;
 
+import com.mango.products.pricing.domain.exception.DomainException;
 import com.mango.products.pricing.domain.exception.PriceNotFoundException;
+import com.mango.products.pricing.domain.exception.PriceOverlapException;
 import com.mango.products.product.domain.exception.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handlePriceNotFound(PriceNotFoundException ex) {
         ErrorResponse error = new ErrorResponse(ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(PriceOverlapException.class)
+    public ResponseEntity<ErrorResponse> handlePriceOverlap(PriceOverlapException ex) {
+        ErrorResponse error = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex) {
+        ErrorResponse error = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -140,7 +140,19 @@ Los tests cubren dominio y application layer sin Spring context, sin DB:
 - `ProductControllerTest`: crear producto, obtener producto, 404 cuando no existe
 - `PricingControllerTest`: agregar precio, obtener historial, obtener precio vigente, 404 no encontrado
 
+**Comportamiento (Cucumber + MockMvc + JPA):**
+- `product-management.feature`: creacion, consulta y validaciones de producto
+- `pricing-management.feature`: alta de precios, precio vigente, historial y errores de negocio
+- `RunCucumberTest`: ejecuta todos los escenarios end-to-end sobre la API
+
 Los tests de integracion usan H2 en memoria (`src/test/resources/application.yml`) para ser rapidos y deterministas. La aplicacion normal usa PostgreSQL por defecto.
+
+Para correr todo el suite, incluyendo Cucumber:
+
+```zsh
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+./gradlew test
+```
 
 ## Ejecucion local
 

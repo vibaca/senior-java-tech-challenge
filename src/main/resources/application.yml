@@ -13,9 +13,6 @@ spring:
       ddl-auto: update
     open-in-view: false
     show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
 
 management:
   endpoints:
@@ -30,4 +27,3 @@ logging:
   level:
     org.springframework: INFO
     com.mango: DEBUG
-    org.hibernate: DEBUG
