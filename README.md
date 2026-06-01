@@ -9,6 +9,7 @@ API para gestionar productos y su historial de precios en el tiempo.
 - [Arquitectura](#arquitectura)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Ejecucion local](#ejecucion-local)
+- [OpenAPI y Swagger](#openapi-y-swagger)
 - [Ejecucion con Docker](#ejecucion-con-docker)
 - [Benchmark](#benchmark)
 - [Troubleshooting](#troubleshooting)
@@ -221,6 +222,15 @@ curl -i http://localhost:8080/products/{productId}/prices?date=2024-04-15
 # Obtener historial completo
 curl -i http://localhost:8080/products/{productId}/prices
 ```
+
+## OpenAPI y Swagger
+
+Con la API levantada, puedes consultar la documentacion interactiva aqui:
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+La documentacion incluye operaciones para los features de productos y precios, con respuestas de exito y errores de negocio.
 
 ## Arquitectura de Controllers (SRP)
 

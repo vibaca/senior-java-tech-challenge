@@ -9,6 +9,12 @@ import com.mango.products.pricing.application.query.GetEffectivePriceQuery;
 import com.mango.products.pricing.application.query.GetPriceHistoryHandler;
 import com.mango.products.pricing.application.query.GetPriceHistoryQuery;
 import com.mango.products.pricing.domain.model.Price;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +26,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/products/{productId}/prices")
+@Tag(name = "Pricing", description = "Historical pricing and effective price endpoints")
 public class PricingController {
 
     private final AddPriceHandler addPriceHandler;
@@ -37,6 +44,25 @@ public class PricingController {
     }
 
     @PostMapping
+    @Operation(summary = "Add product price", description = "Adds a new historical price for a product")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Price created"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid price request",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product not found",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Price range overlap",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            )
+    })
     public ResponseEntity<PriceIdResponse> addPrice(
             @PathVariable UUID productId,
             @RequestBody AddPriceRequest request
@@ -47,6 +73,15 @@ public class PricingController {
     }
 
     @GetMapping
+    @Operation(summary = "Get product prices", description = "Returns price history or effective price when date is provided")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Price data returned"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Price or product not found",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            )
+    })
     public ResponseEntity<?> getPrices(
             @PathVariable UUID productId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
