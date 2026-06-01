@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -80,6 +81,19 @@ class ProductControllerTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldListAllProducts() throws Exception {
+        createProductHandler.handle(new com.mango.products.product.application.command.CreateProductCommand("Camisa", "Algodon"));
+        createProductHandler.handle(new com.mango.products.product.application.command.CreateProductCommand("Zapatillas", "Running"));
+
+        mockMvc.perform(get("/products")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.products").isArray())
+                .andExpect(jsonPath("$.products[*].name", hasItems("Camisa", "Zapatillas")));
     }
 }
 

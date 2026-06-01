@@ -7,6 +7,7 @@ import com.mango.products.product.infrastructure.persistence.entity.ProductEntit
 import com.mango.products.product.infrastructure.persistence.jpa.SpringDataProductJpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,6 +28,13 @@ public class JpaProductRepository implements ProductRepository {
     public Optional<Product> findById(ProductId id) {
         return repository.findById(id.value())
                 .map(this::toDomain);
+    }
+
+    @Override
+    public List<Product> findAll() {
+        return repository.findAllByOrderByNameAsc().stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     private ProductEntity toEntity(Product product) {

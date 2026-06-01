@@ -27,3 +27,10 @@ Feature: Product management
     Then the response status should be 400
     And the error message should contain "description cannot be blank"
 
+  Scenario: List all products
+    Given a product named "Camisa" with description "Algodon" exists
+    And a product named "Zapatillas" with description "Running" exists
+    When I retrieve all products
+    Then the response status should be 200
+    And the products list should contain 2 items
+

@@ -7,6 +7,7 @@ import com.mango.products.pricing.application.query.GetEffectivePriceHandler;
 import com.mango.products.pricing.application.query.GetPriceHistoryHandler;
 import com.mango.products.pricing.domain.repository.PricingRepository;
 import com.mango.products.product.application.command.CreateProductHandler;
+import com.mango.products.product.application.query.GetAllProductsHandler;
 import com.mango.products.product.application.query.GetProductHandler;
 import com.mango.products.product.domain.repository.ProductRepository;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +24,11 @@ public class ApplicationConfig {
     @Bean
     public GetProductHandler getProductHandler(ProductRepository productRepository) {
         return new GetProductHandler(productRepository);
+    }
+
+    @Bean
+    public GetAllProductsHandler getAllProductsHandler(ProductRepository productRepository) {
+        return new GetAllProductsHandler(productRepository);
     }
 
     @Bean

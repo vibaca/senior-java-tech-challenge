@@ -227,6 +227,10 @@ curl -X POST http://localhost:8080/products \
   -H "Content-Type: application/json" \
   -d '{"name":"Zapatillas","description":"Modelo 2025"}'
 
+# Listar productos
+curl -i http://localhost:8080/products \
+  -H "Authorization: Bearer <jwt-token>"
+
 # Obtener producto (reemplace con el ID de respuesta)
 curl -i http://localhost:8080/products/{productId} \
   -H "Authorization: Bearer <jwt-token>"
@@ -273,6 +277,7 @@ Cada controller tiene una única responsabilidad por feature:
 
 - **ProductController**: CRUD básico de productos
   - `POST /products` → crea producto
+  - `GET /products` → lista productos
   - `GET /products/{id}` → obtiene datos del producto
 
 - **PricingController**: manejo de precios históricos

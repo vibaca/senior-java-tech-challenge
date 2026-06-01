@@ -86,6 +86,13 @@ public class BehaviorStepDefinitions {
                 .andReturn());
     }
 
+    @When("I retrieve all products")
+    public void iRetrieveAllProducts() throws Exception {
+        context.setLastResult(mockMvc.perform(get("/products")
+                .header("Authorization", "Bearer " + authToken))
+                .andReturn());
+    }
+
     @When("I retrieve the missing product")
     public void iRetrieveTheMissingProduct() throws Exception {
         context.setLastResult(mockMvc.perform(get("/products/{productId}", context.getMissingProductId())
@@ -205,6 +212,12 @@ public class BehaviorStepDefinitions {
         assertThat(body.get("id").asText()).isEqualTo(context.getCurrentProductId().toString());
         assertThat(body.get("name").asText()).isEqualTo(name);
         assertThat(body.get("description").asText()).isEqualTo(description);
+    }
+
+    @And("the products list should contain {int} items")
+    public void theProductsListShouldContainItems(int expectedItems) throws Exception {
+        JsonNode body = readLastResponseBody();
+        assertThat(body.get("products").size()).isEqualTo(expectedItems);
     }
 
     @And("the effective price should be {string}")
