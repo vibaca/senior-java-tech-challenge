@@ -237,6 +237,16 @@ curl -X POST http://localhost:8080/products/{productId}/prices \
   -H "Content-Type: application/json" \
   -d '{"value":99.99,"initDate":"2024-01-01","endDate":"2024-06-30"}'
 
+# Actualizar precio
+curl -X PUT http://localhost:8080/products/{productId}/prices/{priceId} \
+  -H "Authorization: Bearer <jwt-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"value":119.99,"initDate":"2024-01-01","endDate":"2024-06-30"}'
+
+# Eliminar precio
+curl -X DELETE http://localhost:8080/products/{productId}/prices/{priceId} \
+  -H "Authorization: Bearer <jwt-token>"
+
 # Obtener precio vigente
 curl -i http://localhost:8080/products/{productId}/prices?date=2024-04-15 \
   -H "Authorization: Bearer <jwt-token>"
@@ -267,6 +277,8 @@ Cada controller tiene una única responsabilidad por feature:
 
 - **PricingController**: manejo de precios históricos
   - `POST /products/{id}/prices` → agrega precio
+  - `PUT /products/{id}/prices/{priceId}` → actualiza precio
+  - `DELETE /products/{id}/prices/{priceId}` → elimina precio
   - `GET /products/{id}/prices` → historial o precio vigente (con ?date)
 
 ## Persistencia

@@ -12,6 +12,8 @@ public class BehaviorTestContext {
 
     private UUID currentProductId;
     private UUID missingProductId;
+    private UUID currentPriceId;
+    private UUID missingPriceId;
     private MvcResult lastResult;
 
     public UUID getCurrentProductId() {
@@ -30,6 +32,22 @@ public class BehaviorTestContext {
         this.missingProductId = missingProductId;
     }
 
+    public UUID getCurrentPriceId() {
+        return currentPriceId;
+    }
+
+    public void setCurrentPriceId(UUID currentPriceId) {
+        this.currentPriceId = currentPriceId;
+    }
+
+    public UUID getMissingPriceId() {
+        return missingPriceId;
+    }
+
+    public void setMissingPriceId(UUID missingPriceId) {
+        this.missingPriceId = missingPriceId;
+    }
+
     public MvcResult getLastResult() {
         return lastResult;
     }
@@ -41,6 +59,8 @@ public class BehaviorTestContext {
     public void clear() {
         currentProductId = null;
         missingProductId = null;
+        currentPriceId = null;
+        missingPriceId = null;
         lastResult = null;
     }
 }

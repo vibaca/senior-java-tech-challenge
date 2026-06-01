@@ -14,8 +14,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -27,14 +29,12 @@ public class BehaviorStepDefinitions {
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
     private final BehaviorTestContext context;
-    private final JwtService jwtService;
     private final String authToken;
 
     public BehaviorStepDefinitions(MockMvc mockMvc, ObjectMapper objectMapper, BehaviorTestContext context, JwtService jwtService) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
         this.context = context;
-        this.jwtService = jwtService;
         this.authToken = jwtService.generateToken("testuser");
     }
 
@@ -50,6 +50,11 @@ public class BehaviorStepDefinitions {
         context.setMissingProductId(UUID.randomUUID());
     }
 
+    @Given("a missing price id")
+    public void aMissingPriceId() {
+        context.setMissingPriceId(UUID.randomUUID());
+    }
+
     @Given("the current product has a price of {string} from {string} to {string}")
     public void theCurrentProductHasAPrice(String value, String initDate, String endDate) throws Exception {
         MvcResult result = addPrice(
@@ -59,12 +64,14 @@ public class BehaviorStepDefinitions {
                 parseNullableDate(endDate)
         );
         assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        context.setCurrentPriceId(UUID.fromString(readBody(result).get("id").asText()));
     }
 
     @Given("the current product has an open-ended price of {string} starting on {string}")
     public void theCurrentProductHasAnOpenEndedPrice(String value, String initDate) throws Exception {
         MvcResult result = addPrice(context.getCurrentProductId(), value, LocalDate.parse(initDate), null);
         assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        context.setCurrentPriceId(UUID.fromString(readBody(result).get("id").asText()));
     }
 
     @When("I create a product named {string} with description {string}")
@@ -99,6 +106,38 @@ public class BehaviorStepDefinitions {
     @When("I add an open-ended price of {string} starting on {string} to the current product")
     public void iAddAnOpenEndedPriceToTheCurrentProduct(String value, String initDate) throws Exception {
         context.setLastResult(addPrice(context.getCurrentProductId(), value, LocalDate.parse(initDate), null));
+    }
+
+    @When("I update the current price to {string} from {string} to {string}")
+    public void iUpdateTheCurrentPrice(String value, String initDate, String endDate) throws Exception {
+        context.setLastResult(updatePrice(
+                context.getCurrentProductId(),
+                context.getCurrentPriceId(),
+                value,
+                LocalDate.parse(initDate),
+                parseNullableDate(endDate)
+        ));
+    }
+
+    @When("I update the missing price to {string} from {string} to {string}")
+    public void iUpdateTheMissingPrice(String value, String initDate, String endDate) throws Exception {
+        context.setLastResult(updatePrice(
+                context.getCurrentProductId(),
+                context.getMissingPriceId(),
+                value,
+                LocalDate.parse(initDate),
+                parseNullableDate(endDate)
+        ));
+    }
+
+    @When("I delete the current price")
+    public void iDeleteTheCurrentPrice() throws Exception {
+        context.setLastResult(deletePrice(context.getCurrentProductId(), context.getCurrentPriceId()));
+    }
+
+    @When("I delete the missing price")
+    public void iDeleteTheMissingPrice() throws Exception {
+        context.setLastResult(deletePrice(context.getCurrentProductId(), context.getMissingPriceId()));
     }
 
     @When("I add a price of {string} from {string} to {string} to the missing product")
@@ -157,7 +196,7 @@ public class BehaviorStepDefinitions {
     public void theResponseShouldContainAGeneratedPriceId() throws Exception {
         JsonNode body = readLastResponseBody();
         assertThat(body.hasNonNull("id")).isTrue();
-        UUID.fromString(body.get("id").asText());
+        context.setCurrentPriceId(UUID.fromString(body.get("id").asText()));
     }
 
     @And("the returned product should have name {string} and description {string}")
@@ -220,6 +259,26 @@ public class BehaviorStepDefinitions {
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(request)))
+                .andReturn();
+    }
+
+    private MvcResult updatePrice(UUID productId, UUID priceId, String value, LocalDate initDate, LocalDate endDate) throws Exception {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("value", new BigDecimal(value));
+        request.put("initDate", initDate);
+        request.put("endDate", endDate);
+
+        return mockMvc.perform(put("/products/{productId}/prices/{priceId}", productId, priceId)
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(request)))
+                .andReturn();
+    }
+
+    private MvcResult deletePrice(UUID productId, UUID priceId) throws Exception {
+        return mockMvc.perform(delete("/products/{productId}/prices/{priceId}", productId, priceId)
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
     }
 

@@ -2,8 +2,13 @@ package com.mango.products.pricing.api.controller;
 
 import com.mango.products.pricing.api.dto.AddPriceRequest;
 import com.mango.products.pricing.api.dto.PriceDTO;
+import com.mango.products.pricing.api.dto.UpdatePriceRequest;
 import com.mango.products.pricing.application.command.AddPriceCommand;
 import com.mango.products.pricing.application.command.AddPriceHandler;
+import com.mango.products.pricing.application.command.DeletePriceCommand;
+import com.mango.products.pricing.application.command.DeletePriceHandler;
+import com.mango.products.pricing.application.command.UpdatePriceCommand;
+import com.mango.products.pricing.application.command.UpdatePriceHandler;
 import com.mango.products.pricing.application.query.GetEffectivePriceHandler;
 import com.mango.products.pricing.application.query.GetEffectivePriceQuery;
 import com.mango.products.pricing.application.query.GetPriceHistoryHandler;
@@ -31,15 +36,21 @@ import java.util.UUID;
 public class PricingController {
 
     private final AddPriceHandler addPriceHandler;
+    private final UpdatePriceHandler updatePriceHandler;
+    private final DeletePriceHandler deletePriceHandler;
     private final GetEffectivePriceHandler getEffectivePriceHandler;
     private final GetPriceHistoryHandler getPriceHistoryHandler;
 
     public PricingController(
             AddPriceHandler addPriceHandler,
+            UpdatePriceHandler updatePriceHandler,
+            DeletePriceHandler deletePriceHandler,
             GetEffectivePriceHandler getEffectivePriceHandler,
             GetPriceHistoryHandler getPriceHistoryHandler
     ) {
         this.addPriceHandler = addPriceHandler;
+        this.updatePriceHandler = updatePriceHandler;
+        this.deletePriceHandler = deletePriceHandler;
         this.getEffectivePriceHandler = getEffectivePriceHandler;
         this.getPriceHistoryHandler = getPriceHistoryHandler;
     }
@@ -72,6 +83,62 @@ public class PricingController {
         AddPriceCommand command = new AddPriceCommand(productId, request.value(), request.initDate(), request.endDate());
         UUID priceId = addPriceHandler.handle(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(new PriceIdResponse(priceId));
+    }
+
+    @PutMapping("/{priceId}")
+    @Operation(summary = "Update product price", description = "Updates an existing historical price by id")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Price updated"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid price request",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Price or product not found",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Price range overlap",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<PriceIdResponse> updatePrice(
+            @PathVariable UUID productId,
+            @PathVariable UUID priceId,
+            @RequestBody UpdatePriceRequest request
+    ) {
+        UpdatePriceCommand command = new UpdatePriceCommand(
+                productId,
+                priceId,
+                request.value(),
+                request.initDate(),
+                request.endDate()
+        );
+        UUID updatedPriceId = updatePriceHandler.handle(command);
+        return ResponseEntity.ok(new PriceIdResponse(updatedPriceId));
+    }
+
+    @DeleteMapping("/{priceId}")
+    @Operation(summary = "Delete product price", description = "Deletes a historical price by id")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Price deleted"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Price or product not found",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Void> deletePrice(
+            @PathVariable UUID productId,
+            @PathVariable UUID priceId
+    ) {
+        deletePriceHandler.handle(new DeletePriceCommand(productId, priceId));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping

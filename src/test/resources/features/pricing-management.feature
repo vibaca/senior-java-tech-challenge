@@ -68,3 +68,43 @@ Feature: Pricing management
     Then the response status should be 404
     And the error message should contain "Product not found"
 
+  Scenario: Update a price successfully
+    Given a product named "Zapatillas deportivas" with description "Modelo 2025" exists
+    And the current product has a price of "99.99" from "2024-01-01" to "2024-06-30"
+    When I update the current price to "119.99" from "2024-01-01" to "2024-06-30"
+    Then the response status should be 200
+    And the response should contain a generated price id
+    When I request the effective price for the current product on "2024-04-15"
+    Then the response status should be 200
+    And the effective price should be "119.99"
+
+  Scenario: Reject updating a price when new range overlaps
+    Given a product named "Zapatillas deportivas" with description "Modelo 2025" exists
+    And the current product has a price of "99.99" from "2024-01-01" to "2024-06-30"
+    And the current product has an open-ended price of "149.99" starting on "2024-07-01"
+    When I update the current price to "119.99" from "2024-06-15" to "2024-07-15"
+    Then the response status should be 409
+    And the error message should contain "overlaps"
+
+  Scenario: Reject updating a missing price
+    Given a product named "Zapatillas deportivas" with description "Modelo 2025" exists
+    And a missing price id
+    When I update the missing price to "119.99" from "2024-01-01" to "2024-06-30"
+    Then the response status should be 404
+    And the error message should contain "Price not found"
+
+  Scenario: Delete a price successfully
+    Given a product named "Zapatillas deportivas" with description "Modelo 2025" exists
+    And the current product has a price of "99.99" from "2024-01-01" to "2024-06-30"
+    When I delete the current price
+    Then the response status should be 204
+    When I request the effective price for the current product on "2024-04-15"
+    Then the response status should be 404
+
+  Scenario: Reject deleting a missing price
+    Given a product named "Zapatillas deportivas" with description "Modelo 2025" exists
+    And a missing price id
+    When I delete the missing price
+    Then the response status should be 404
+    And the error message should contain "Price not found"
+

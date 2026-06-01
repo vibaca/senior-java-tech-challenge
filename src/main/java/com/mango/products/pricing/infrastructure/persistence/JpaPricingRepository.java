@@ -36,6 +36,16 @@ public class JpaPricingRepository implements PricingRepository {
     }
 
     @Override
+    public Optional<Price> findById(PriceId priceId) {
+        return repository.findById(priceId.value()).map(this::toDomain);
+    }
+
+    @Override
+    public void deleteById(PriceId priceId) {
+        repository.deleteById(priceId.value());
+    }
+
+    @Override
     public Optional<Price> findEffectivePriceAt(ProductId productId, LocalDate date) {
         return repository.findEffectivePrices(productId.value(), date).stream()
                 .findFirst()

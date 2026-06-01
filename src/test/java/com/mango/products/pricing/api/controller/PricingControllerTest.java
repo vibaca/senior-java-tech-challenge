@@ -2,6 +2,7 @@ package com.mango.products.pricing.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mango.products.pricing.api.dto.AddPriceRequest;
+import com.mango.products.pricing.api.dto.UpdatePriceRequest;
 import com.mango.products.pricing.application.command.AddPriceHandler;
 import com.mango.products.pricing.application.command.AddPriceCommand;
 import com.mango.products.config.security.JwtService;
@@ -102,6 +103,49 @@ class PricingControllerTest {
 
     @Test
     void shouldReturn404WhenNoPriceFoundForDate() throws Exception {
+        mockMvc.perform(get("/products/" + productId + "/prices?date=2024-04-15")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldUpdatePriceAndReturnId() throws Exception {
+        UUID priceId = addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("99.99"),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 6, 30)
+        ));
+
+        UpdatePriceRequest request = new UpdatePriceRequest(
+                new BigDecimal("119.99"),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 6, 30)
+        );
+
+        mockMvc.perform(put("/products/" + productId + "/prices/" + priceId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(priceId.toString()));
+    }
+
+    @Test
+    void shouldDeletePriceAndReturn204() throws Exception {
+        UUID priceId = addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("99.99"),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 6, 30)
+        ));
+
+        mockMvc.perform(delete("/products/" + productId + "/prices/" + priceId)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
         mockMvc.perform(get("/products/" + productId + "/prices?date=2024-04-15")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))

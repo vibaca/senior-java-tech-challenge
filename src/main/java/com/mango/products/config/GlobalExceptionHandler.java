@@ -1,6 +1,7 @@
 package com.mango.products.config;
 
 import com.mango.products.pricing.domain.exception.DomainException;
+import com.mango.products.pricing.domain.exception.PriceNotFoundByIdException;
 import com.mango.products.pricing.domain.exception.PriceNotFoundException;
 import com.mango.products.pricing.domain.exception.PriceOverlapException;
 import com.mango.products.product.domain.exception.ProductNotFoundException;
@@ -20,6 +21,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PriceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlePriceNotFound(PriceNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(PriceNotFoundByIdException.class)
+    public ResponseEntity<ErrorResponse> handlePriceNotFoundById(PriceNotFoundByIdException ex) {
         ErrorResponse error = new ErrorResponse(ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
