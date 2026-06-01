@@ -1,5 +1,7 @@
 package com.mango.products.pricing.domain.repository;
 
+import com.mango.products.pricing.api.dto.PriceFilterCriteria;
+import com.mango.products.pricing.api.dto.PriceHistoryPageResponse;
 import com.mango.products.pricing.domain.model.Price;
 import com.mango.products.pricing.domain.valueobject.PriceId;
 import com.mango.products.product.domain.valueobject.ProductId;
@@ -14,6 +16,7 @@ public interface PricingRepository {
     Optional<Price> findById(PriceId priceId);
     void deleteById(PriceId priceId);
     Optional<Price> findEffectivePriceAt(ProductId productId, LocalDate date);
+    PriceHistoryPageResponse findByProductIdWithFilters(ProductId productId, PriceFilterCriteria criteria);
 }
 
 

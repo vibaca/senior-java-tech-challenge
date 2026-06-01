@@ -9,6 +9,7 @@ API para gestionar productos y su historial de precios en el tiempo.
 - [Arquitectura](#arquitectura)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Ejecucion local](#ejecucion-local)
+- [Características Opcionales](#características-opcionales)
 - [OpenAPI y Swagger](#openapi-y-swagger)
 - [Ejecucion con Docker](#ejecucion-con-docker)
 - [Benchmark](#benchmark)
@@ -259,6 +260,106 @@ curl -i http://localhost:8080/products/{productId}/prices?date=2024-04-15 \
 curl -i http://localhost:8080/products/{productId}/prices \
   -H "Authorization: Bearer <jwt-token>"
 ```
+
+## Características Opcionales
+
+### ✅ Paginación, Ordenamiento y Filtrado
+
+El endpoint `GET /products/{productId}/prices` ahora soporta:
+
+#### Parámetros de Query
+
+**Paginación:**
+- `page` (int, default: 0) - Número de página
+- `size` (int, default: 10) - Registros por página (1-100)
+
+**Ordenamiento:**
+- `sort` (string, default: "initDate") - Campo: `initDate`, `endDate`, o `value`
+- `direction` (string, default: "ASC") - Dirección: `ASC` o `DESC`
+
+**Filtrado por Precio:**
+- `minValue` (BigDecimal) - Precio mínimo
+- `maxValue` (BigDecimal) - Precio máximo
+
+**Filtrado por Fechas:**
+- `startDate` (YYYY-MM-DD) - Precios vigentes desde esta fecha
+- `endDate` (YYYY-MM-DD) - Precios vigentes hasta esta fecha
+
+#### Ejemplos
+
+```zsh
+# Filtrar por rango de precios (entre 50 y 150)
+curl -i "http://localhost:8080/products/{productId}/prices?minValue=50&maxValue=150" \
+  -H "Authorization: Bearer <jwt-token>"
+
+# Paginación: página 2 con 5 registros
+curl -i "http://localhost:8080/products/{productId}/prices?page=1&size=5" \
+  -H "Authorization: Bearer <jwt-token>"
+
+# Ordenar por precio descendente
+curl -i "http://localhost:8080/products/{productId}/prices?sort=value&direction=DESC" \
+  -H "Authorization: Bearer <jwt-token>"
+
+# Combinar filtros: precios entre 50-150 vigentes en 2026, ordenados por fecha
+curl -i "http://localhost:8080/products/{productId}/prices?minValue=50&maxValue=150&startDate=2026-01-01&endDate=2026-12-31&sort=initDate&direction=DESC&page=0&size=10" \
+  -H "Authorization: Bearer <jwt-token>"
+```
+
+#### Respuesta con Paginación
+
+```json
+{
+  "prices": [
+    {
+      "id": "uuid-price-1",
+      "value": 99.99,
+      "initDate": "2026-07-01",
+      "endDate": null
+    },
+    {
+      "id": "uuid-price-2",
+      "value": 89.99,
+      "initDate": "2026-01-01",
+      "endDate": "2026-06-30"
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "total": 2,
+  "totalPages": 1
+}
+```
+
+Para una guía completa, ver [`PAGINATION_FILTERING_GUIDE.md`](./PAGINATION_FILTERING_GUIDE.md)
+
+### ✅ Actualización y Eliminación de Precios
+
+Endpoints para modificar precios existentes:
+
+```zsh
+# Actualizar un precio
+curl -X PUT http://localhost:8080/products/{productId}/prices/{priceId} \
+  -H "Authorization: Bearer <jwt-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"value":119.99,"initDate":"2024-01-01","endDate":"2024-06-30"}'
+
+# Eliminar un precio
+curl -X DELETE http://localhost:8080/products/{productId}/prices/{priceId} \
+  -H "Authorization: Bearer <jwt-token>"
+```
+
+### ✅ Autenticación con JWT
+
+La API está protegida con tokens JWT. Todos los endpoints requieren autenticación Bearer token.
+
+```zsh
+curl -i http://localhost:8080/products/{productId}/prices \
+  -H "Authorization: Bearer <jwt-token>"
+```
+
+### ✅ Documentación OpenAPI/Swagger
+
+La API está completamente documentada con Swagger/OpenAPI (ver sección [OpenAPI y Swagger](#openapi-y-swagger)).
 
 10) Poblar datos de prueba automaticamente (manual):
 

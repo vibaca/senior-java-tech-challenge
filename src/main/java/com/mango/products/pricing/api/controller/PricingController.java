@@ -2,6 +2,8 @@ package com.mango.products.pricing.api.controller;
 
 import com.mango.products.pricing.api.dto.AddPriceRequest;
 import com.mango.products.pricing.api.dto.PriceDTO;
+import com.mango.products.pricing.api.dto.PriceFilterCriteria;
+import com.mango.products.pricing.api.dto.PriceHistoryPageResponse;
 import com.mango.products.pricing.api.dto.UpdatePriceRequest;
 import com.mango.products.pricing.application.command.AddPriceCommand;
 import com.mango.products.pricing.application.command.AddPriceHandler;
@@ -15,6 +17,8 @@ import com.mango.products.pricing.application.query.GetPriceHistoryHandler;
 import com.mango.products.pricing.application.query.GetPriceHistoryQuery;
 import com.mango.products.pricing.domain.model.Price;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -144,33 +149,53 @@ public class PricingController {
     @GetMapping
     @Operation(summary = "Get product prices", description = "Returns price history or effective price when date is provided")
     @SecurityRequirement(name = "bearerAuth")
+    @Parameters({
+            @Parameter(name = "page", description = "Page number (0-indexed)", example = "0"),
+            @Parameter(name = "size", description = "Records per page (1-100, default 10)", example = "10"),
+            @Parameter(name = "sort", description = "Sort field: initDate, endDate, or value", example = "initDate"),
+            @Parameter(name = "direction", description = "Sort direction: ASC or DESC", example = "ASC"),
+            @Parameter(name = "minValue", description = "Minimum price filter", example = "50.00"),
+            @Parameter(name = "maxValue", description = "Maximum price filter", example = "150.00"),
+            @Parameter(name = "startDate", description = "Filter prices effective from this date (format: YYYY-MM-DD)", example = "2026-01-01"),
+            @Parameter(name = "endDate", description = "Filter prices effective until this date (format: YYYY-MM-DD)", example = "2026-12-31"),
+            @Parameter(name = "date", description = "Get effective price for specific date (format: YYYY-MM-DD)", example = "2026-06-02")
+    })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Price data returned"),
             @ApiResponse(
                     responseCode = "404",
                     description = "Price or product not found",
                     content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid filter criteria",
+                    content = @Content(schema = @Schema(implementation = com.mango.products.config.GlobalExceptionHandler.ErrorResponse.class))
             )
     })
     public ResponseEntity<?> getPrices(
             @PathVariable UUID productId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "initDate") String sort,
+            @RequestParam(defaultValue = "ASC") String direction,
+            @RequestParam(required = false) BigDecimal minValue,
+            @RequestParam(required = false) BigDecimal maxValue,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
+        // Get effective price for a specific date
         if (date != null) {
             Price price = getEffectivePriceHandler.handle(new GetEffectivePriceQuery(productId, date));
             return ResponseEntity.ok(new EffectivePriceResponse(price.value().value()));
-        } else {
-            List<Price> prices = getPriceHistoryHandler.handle(new GetPriceHistoryQuery(productId));
-            List<PriceDTO> pricesDTOs = prices.stream()
-                    .map(p -> new PriceDTO(
-                            p.id().value(),
-                            p.value().value(),
-                            p.dateRange().initDate(),
-                            p.dateRange().endDate()
-                    ))
-                    .toList();
-            return ResponseEntity.ok(new PriceHistoryResponse(pricesDTOs));
         }
+
+        // Get price history with optional filters and pagination
+        PriceFilterCriteria criteria = new PriceFilterCriteria(page, size, sort, direction, minValue, maxValue, startDate, endDate);
+        GetPriceHistoryQuery query = new GetPriceHistoryQuery(productId, criteria);
+        PriceHistoryPageResponse response = getPriceHistoryHandler.handleWithFilters(query);
+        return ResponseEntity.ok(response);
     }
 
     public record PriceIdResponse(UUID id) {
@@ -178,8 +203,8 @@ public class PricingController {
 
     public record EffectivePriceResponse(java.math.BigDecimal value) {
     }
-
-    public record PriceHistoryResponse(List<PriceDTO> prices) {
-    }
 }
+
+
+
 

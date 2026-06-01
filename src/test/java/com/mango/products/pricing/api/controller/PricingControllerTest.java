@@ -151,5 +151,109 @@ class PricingControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void shouldFilterPricesByMinValue() throws Exception {
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("50.00"),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 6, 30)
+        ));
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("150.00"),
+                LocalDate.of(2024, 7, 1),
+                LocalDate.of(2024, 12, 31)
+        ));
+
+        mockMvc.perform(get("/products/" + productId + "/prices?minValue=100")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.prices").isArray())
+                .andExpect(jsonPath("$.prices.length()").value(1))
+                .andExpect(jsonPath("$.prices[0].value").value(150.00));
+    }
+
+    @Test
+    void shouldFilterPricesByMaxValue() throws Exception {
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("50.00"),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 6, 30)
+        ));
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("150.00"),
+                LocalDate.of(2024, 7, 1),
+                LocalDate.of(2024, 12, 31)
+        ));
+
+        mockMvc.perform(get("/products/" + productId + "/prices?maxValue=100")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.prices").isArray())
+                .andExpect(jsonPath("$.prices.length()").value(1))
+                .andExpect(jsonPath("$.prices[0].value").value(50.00));
+    }
+
+    @Test
+    void shouldPaginatePrices() throws Exception {
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("50.00"),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 3, 31)
+        ));
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("75.00"),
+                LocalDate.of(2024, 4, 1),
+                LocalDate.of(2024, 6, 30)
+        ));
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("100.00"),
+                LocalDate.of(2024, 7, 1),
+                LocalDate.of(2024, 12, 31)
+        ));
+
+        mockMvc.perform(get("/products/" + productId + "/prices?page=0&size=2")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.prices").isArray())
+                .andExpect(jsonPath("$.prices.length()").value(2))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.total").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2));
+    }
+
+    @Test
+    void shouldSortPricesByInitDateDesc() throws Exception {
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("50.00"),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 6, 30)
+        ));
+        addPriceHandler.handle(new AddPriceCommand(
+                productId,
+                new BigDecimal("75.00"),
+                LocalDate.of(2024, 7, 1),
+                LocalDate.of(2024, 12, 31)
+        ));
+
+        mockMvc.perform(get("/products/" + productId + "/prices?sort=initDate&direction=DESC")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.prices[0].value").value(75.00))
+                .andExpect(jsonPath("$.prices[1].value").value(50.00));
+    }
 }
 
