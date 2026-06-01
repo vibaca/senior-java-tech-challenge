@@ -2,6 +2,7 @@ package com.mango.products.behavior;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mango.products.config.security.JwtService;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -26,11 +27,15 @@ public class BehaviorStepDefinitions {
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
     private final BehaviorTestContext context;
+    private final JwtService jwtService;
+    private final String authToken;
 
-    public BehaviorStepDefinitions(MockMvc mockMvc, ObjectMapper objectMapper, BehaviorTestContext context) {
+    public BehaviorStepDefinitions(MockMvc mockMvc, ObjectMapper objectMapper, BehaviorTestContext context, JwtService jwtService) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
         this.context = context;
+        this.jwtService = jwtService;
+        this.authToken = jwtService.generateToken("testuser");
     }
 
     @Given("a product named {string} with description {string} exists")
@@ -69,13 +74,15 @@ public class BehaviorStepDefinitions {
 
     @When("I retrieve the current product")
     public void iRetrieveTheCurrentProduct() throws Exception {
-        context.setLastResult(mockMvc.perform(get("/products/{productId}", context.getCurrentProductId()))
+        context.setLastResult(mockMvc.perform(get("/products/{productId}", context.getCurrentProductId())
+                .header("Authorization", "Bearer " + authToken))
                 .andReturn());
     }
 
     @When("I retrieve the missing product")
     public void iRetrieveTheMissingProduct() throws Exception {
-        context.setLastResult(mockMvc.perform(get("/products/{productId}", context.getMissingProductId()))
+        context.setLastResult(mockMvc.perform(get("/products/{productId}", context.getMissingProductId())
+                .header("Authorization", "Bearer " + authToken))
                 .andReturn());
     }
 
@@ -107,6 +114,7 @@ public class BehaviorStepDefinitions {
     @When("I request the effective price for the current product on {string}")
     public void iRequestTheEffectivePriceForTheCurrentProduct(String date) throws Exception {
         context.setLastResult(mockMvc.perform(get("/products/{productId}/prices", context.getCurrentProductId())
+                        .header("Authorization", "Bearer " + authToken)
                         .param("date", date))
                 .andReturn());
     }
@@ -114,19 +122,22 @@ public class BehaviorStepDefinitions {
     @When("I request the effective price for the missing product on {string}")
     public void iRequestTheEffectivePriceForTheMissingProduct(String date) throws Exception {
         context.setLastResult(mockMvc.perform(get("/products/{productId}/prices", context.getMissingProductId())
+                        .header("Authorization", "Bearer " + authToken)
                         .param("date", date))
                 .andReturn());
     }
 
     @When("I request the price history for the current product")
     public void iRequestThePriceHistoryForTheCurrentProduct() throws Exception {
-        context.setLastResult(mockMvc.perform(get("/products/{productId}/prices", context.getCurrentProductId()))
+        context.setLastResult(mockMvc.perform(get("/products/{productId}/prices", context.getCurrentProductId())
+                .header("Authorization", "Bearer " + authToken))
                 .andReturn());
     }
 
     @When("I request the price history for the missing product")
     public void iRequestThePriceHistoryForTheMissingProduct() throws Exception {
-        context.setLastResult(mockMvc.perform(get("/products/{productId}/prices", context.getMissingProductId()))
+        context.setLastResult(mockMvc.perform(get("/products/{productId}/prices", context.getMissingProductId())
+                .header("Authorization", "Bearer " + authToken))
                 .andReturn());
     }
 
@@ -193,8 +204,9 @@ public class BehaviorStepDefinitions {
         request.put("description", description);
 
         return mockMvc.perform(post("/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(request)))
+                .header("Authorization", "Bearer " + authToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(request)))
                 .andReturn();
     }
 
@@ -205,8 +217,9 @@ public class BehaviorStepDefinitions {
         request.put("endDate", endDate);
 
         return mockMvc.perform(post("/products/{productId}/prices", productId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(request)))
+                .header("Authorization", "Bearer " + authToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(request)))
                 .andReturn();
     }
 

@@ -12,6 +12,7 @@ import com.mango.products.pricing.domain.model.Price;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,6 +46,7 @@ public class PricingController {
 
     @PostMapping
     @Operation(summary = "Add product price", description = "Adds a new historical price for a product")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Price created"),
             @ApiResponse(
@@ -74,6 +76,7 @@ public class PricingController {
 
     @GetMapping
     @Operation(summary = "Get product prices", description = "Returns price history or effective price when date is provided")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Price data returned"),
             @ApiResponse(

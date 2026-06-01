@@ -10,6 +10,7 @@ import com.mango.products.product.domain.model.Product;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,6 +35,7 @@ public class ProductController {
 
     @PostMapping
     @Operation(summary = "Create a product", description = "Creates a new product and returns its identifier")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Product created"),
             @ApiResponse(
@@ -50,6 +52,7 @@ public class ProductController {
 
     @GetMapping("/{productId}")
     @Operation(summary = "Get product by id", description = "Returns a product by identifier")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Product found"),
             @ApiResponse(

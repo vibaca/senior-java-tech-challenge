@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mango.products.pricing.api.dto.AddPriceRequest;
 import com.mango.products.pricing.application.command.AddPriceHandler;
 import com.mango.products.pricing.application.command.AddPriceCommand;
+import com.mango.products.config.security.JwtService;
 import com.mango.products.product.application.command.CreateProductCommand;
 import com.mango.products.product.application.command.CreateProductHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,12 +38,17 @@ class PricingControllerTest {
     @Autowired
     private AddPriceHandler addPriceHandler;
 
+    @Autowired
+    private JwtService jwtService;
+
     private UUID productId;
+    private String token;
 
     @BeforeEach
     void setUp() {
         CreateProductCommand cmd = new CreateProductCommand("Zapatillas", "Modelo 2025");
         productId = createProductHandler.handle(cmd);
+        token = jwtService.generateToken("testuser");
     }
 
     @Test
@@ -54,6 +60,7 @@ class PricingControllerTest {
         );
 
         mockMvc.perform(post("/products/" + productId + "/prices")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -70,6 +77,7 @@ class PricingControllerTest {
         ));
 
         mockMvc.perform(get("/products/" + productId + "/prices")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.prices").isArray())
@@ -86,6 +94,7 @@ class PricingControllerTest {
         ));
 
         mockMvc.perform(get("/products/" + productId + "/prices?date=2024-04-15")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.value").value(99.99));
@@ -94,6 +103,7 @@ class PricingControllerTest {
     @Test
     void shouldReturn404WhenNoPriceFoundForDate() throws Exception {
         mockMvc.perform(get("/products/" + productId + "/prices?date=2024-04-15")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }

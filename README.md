@@ -28,6 +28,8 @@ API para gestionar productos y su historial de precios en el tiempo.
 - Docker
 - Spring Data JPA
 - PostgreSQL
+- Spring Security
+- JWT (JJWT)
 
 ## Arquitectura
 
@@ -200,27 +202,48 @@ docker compose up -d postgres
 curl -i http://localhost:8080/actuator/health
 ```
 
-8) Probar endpoints principales:
+8) Obtener token JWT:
 
 ```zsh
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"password"}'
+```
+
+Respuesta esperada:
+
+```json
+{"token":"<jwt-token>"}
+```
+
+9) Probar endpoints principales (protegidos con Bearer token):
+
+```zsh
+# Reemplaza <jwt-token> con el token devuelto por /auth/login
+
 # Crear producto
 curl -X POST http://localhost:8080/products \
+  -H "Authorization: Bearer <jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{"name":"Zapatillas","description":"Modelo 2025"}'
 
 # Obtener producto (reemplace con el ID de respuesta)
-curl -i http://localhost:8080/products/{productId}
+curl -i http://localhost:8080/products/{productId} \
+  -H "Authorization: Bearer <jwt-token>"
 
 # Agregar precio
 curl -X POST http://localhost:8080/products/{productId}/prices \
+  -H "Authorization: Bearer <jwt-token>" \
   -H "Content-Type: application/json" \
   -d '{"value":99.99,"initDate":"2024-01-01","endDate":"2024-06-30"}'
 
 # Obtener precio vigente
-curl -i http://localhost:8080/products/{productId}/prices?date=2024-04-15
+curl -i http://localhost:8080/products/{productId}/prices?date=2024-04-15 \
+  -H "Authorization: Bearer <jwt-token>"
 
 # Obtener historial completo
-curl -i http://localhost:8080/products/{productId}/prices
+curl -i http://localhost:8080/products/{productId}/prices \
+  -H "Authorization: Bearer <jwt-token>"
 ```
 
 ## OpenAPI y Swagger
@@ -231,6 +254,8 @@ Con la API levantada, puedes consultar la documentacion interactiva aqui:
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 La documentacion incluye operaciones para los features de productos y precios, con respuestas de exito y errores de negocio.
+
+Puedes autenticarte directamente desde Swagger con el endpoint `POST /auth/login` y luego usar el boton **Authorize** con el esquema `bearerAuth`.
 
 ## Arquitectura de Controllers (SRP)
 

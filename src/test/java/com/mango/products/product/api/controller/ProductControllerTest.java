@@ -1,6 +1,7 @@
 package com.mango.products.product.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mango.products.config.security.JwtService;
 import com.mango.products.product.api.dto.CreateProductRequest;
 import com.mango.products.product.application.command.CreateProductHandler;
 import com.mango.products.product.application.query.GetProductHandler;
@@ -34,11 +35,22 @@ class ProductControllerTest {
     @Autowired
     private GetProductHandler getProductHandler;
 
+    @Autowired
+    private JwtService jwtService;
+
+    private String token;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        token = jwtService.generateToken("testuser");
+    }
+
     @Test
     void shouldCreateProductAndReturnId() throws Exception {
         CreateProductRequest request = new CreateProductRequest("Zapatillas", "Modelo 2025");
 
         mockMvc.perform(post("/products")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -52,6 +64,7 @@ class ProductControllerTest {
         UUID productId = createProductHandler.handle(cmd);
 
         mockMvc.perform(get("/products/" + productId)
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(productId.toString()))
@@ -64,6 +77,7 @@ class ProductControllerTest {
         UUID nonExistentId = UUID.randomUUID();
 
         mockMvc.perform(get("/products/" + nonExistentId)
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }

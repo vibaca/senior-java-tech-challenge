@@ -27,3 +27,7 @@ logging:
   level:
     org.springframework: INFO
     com.mango: DEBUG
+
+jwt:
+  secret: "your-secret-key-change-in-production-min-32-chars-required-for-hs256"
+  expiration: 86400000  # 24 hours in milliseconds
