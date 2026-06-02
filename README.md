@@ -86,9 +86,6 @@ chmod +x ./gradlew
 # Levantar API + base de datos con Docker
 make up
 
-# Ejecutar las pruebas de rendimiento
-make benchmark
-
 # Ejecutar tests (unit + behavior)
 make test
 
@@ -103,6 +100,9 @@ make seed
 
 # Abrir Swagger UI en el navegador
 make swagger
+
+# Ejecutar las pruebas de rendimiento
+make benchmark
 
 # Detener todos los contenedores
 make down
