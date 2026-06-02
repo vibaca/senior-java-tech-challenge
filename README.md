@@ -323,17 +323,54 @@ La persistencia se implementa con **Spring Data JPA + PostgreSQL**.
 
 ## Benchmark
 
+Ejecutar benchmark completo (API + DB + script de carga):
+
 ```zsh
 make benchmark
+```
+
+O con Docker Compose directo:
+
+```zsh
+docker compose down
+docker compose up --build
 ```
 
 El servicio `benchmark` ejecuta `benchmark.sh` y realiza:
 
 1. Espera a que `GET /actuator/health` responda OK.
-2. Crea un producto de prueba.
-3. Agrega varios precios por rango de fechas.
-4. Consulta precio vigente e historial.
-5. Lanza pruebas concurrentes de escritura y lectura.
+2. Hace login JWT (`/auth/login`) y usa Bearer token en requests protegidos.
+3. Crea producto y precios de prueba.
+4. Ejecuta carga concurrente:
+   - 1000 creaciones de producto.
+   - 20000 consultas de precio por fecha.
+   - 15000 consultas de historial.
+
+### Restricciones de recursos (cumplimiento)
+
+En `docker-compose.yml` se respetan los límites de la prueba:
+
+- **app**:
+  - `limits.cpus: '1.0'`
+  - `limits.memory: 1G`
+- **benchmark** (contenedor auxiliar):
+  - `limits.cpus: '0.5'`
+  - `limits.memory: 1G`
+
+Con esto se mantiene el contenedor auxiliar en el máximo permitido (500m CPU y 1GB RAM).
+
+### Qué se observa durante la prueba
+
+- Tiempo de arranque de la app (en logs de `product-api`).
+- Duración total de cada bloque concurrente (salida de `benchmark.sh`).
+- Funcionamiento bajo carga con restricciones de CPU/memoria.
+
+Para ver logs en tiempo real:
+
+```zsh
+make logs
+docker compose logs -f benchmark
+```
 
 ## Troubleshooting
 
