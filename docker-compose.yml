@@ -45,6 +45,10 @@ services:
     container_name: product-benchmark
     depends_on:
       - app
+    environment:
+      BASE_URL: http://product-api:8080
+      AUTH_USER: admin
+      AUTH_PASSWORD: password
     command: sh -c "chmod +x /app/benchmark.sh && /app/benchmark.sh"
     deploy:
       resources:
